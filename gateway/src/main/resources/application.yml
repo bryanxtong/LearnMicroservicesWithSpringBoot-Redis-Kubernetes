@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: gateway
+  config:
+    import: 'optional:consul:'
   cloud:
     consul:
       enabled: true
@@ -12,6 +14,15 @@ spring:
         query-passing: true
       host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
       port: 8500
+      config:
+        prefixes:
+          - config
+        format: YAML
+        default-context: application
+        watch:
+          enabled: true
+          delay: 3000
+          wait-time: 5
     gateway:
       server:
         webflux:
@@ -61,19 +72,10 @@ management:
   tracing:
     sampling:
       probability: 1.0
-    enabled: true
-  #endpoint:
-    #gateway:
-      #enabled: true
-  #endpoints:
-    #web:
-      #exposure:
-        #include: health, gateway
-    #propagation:
-      #type: w3c
-  zipkin:
-    tracing:
-      endpoint: http://${SPRING_CLOUD_ZIPKIN_HOST:localhost}:9411/api/v2/spans
+    export:
+      enabled: true
+      zipkin:
+        endpoint: http://${SPRING_CLOUD_ZIPKIN_HOST:localhost}:9411/api/v2/spans
 
 ---
 spring:
