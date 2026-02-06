@@ -52,7 +52,18 @@ And the UI server (first you have to build it with `npm run build`):
 
 ```bash
 challenges-frontend$ npm install
-challenges-frontend$ npm run build
+# Build with Docker Compose environment URLs
+challenges-frontend$ REACT_APP_API_URL=http://localhost:8000 REACT_APP_KEYCLOAK_URL=http://localhost:8180 npm run build
+challenges-frontend$ docker build -t challenges-frontend:1.0 .
+```
+
+**Important Note**: React environment variables are build-time only. The frontend image must be built with the correct URLs for the Docker Compose environment:
+- `REACT_APP_API_URL=http://localhost:8000` (Gateway direct access)
+- `REACT_APP_KEYCLOAK_URL=http://localhost:8180` (Keycloak direct access)
+
+For Kubernetes deployment, rebuild the frontend with different URLs:
+```bash
+challenges-frontend$ REACT_APP_API_URL=http://localhost/api REACT_APP_KEYCLOAK_URL=http://localhost/auth npm run build
 challenges-frontend$ docker build -t challenges-frontend:1.0 .
 ```
 
@@ -68,6 +79,30 @@ See the figure below for a diagram showing the container view.
 
 Once the backend and the frontend are started, you can navigate to `http://localhost:3000` in your browser and start resolving multiplication challenges.
 
+### Docker Compose Services
+
+The Docker Compose setup includes:
+- **Frontend** (port 3000): React web application
+- **Gateway** (port 8000): API Gateway with OAuth2 support
+- **Multiplication** (internal): Multiplication challenge service
+- **Gamification** (internal): Gamification service
+- **Logs** (internal): Centralized log consumer
+- **Consul** (port 8500): Service discovery and configuration
+- **Redis** (port 6379): Message broker and cache
+- **Zipkin** (port 9411): Distributed tracing
+- **Keycloak** (port 8180): OAuth2/OIDC authentication server
+
+**Access URLs**:
+- Frontend: http://localhost:3000
+- API Gateway: http://localhost:8000
+- Consul UI: http://localhost:8500
+- Zipkin UI: http://localhost:9411
+- Keycloak: http://localhost:8180
+
+**Authentication**:
+- Username: `testuser`
+- Password: `testuser`
+
 ## Playing with Docker Compose
 
 After the system is up and running, you can quickly scale up and down instances of both Multiplication and Gamification services. For example, you can run:
@@ -76,7 +111,7 @@ After the system is up and running, you can quickly scale up and down instances 
 docker$ docker-compose up --scale multiplication=2 --scale gamification=2
 ```
 
-And you'll get two instances of each of these services with proper Load Balancing and Service Discovery.
+**Note**: Multiplication and Gamification use H2 file databases, so scaling beyond 1 replica may cause data inconsistency. For production use with multiple replicas, migrate to an external database like PostgreSQL.
 
 ## Running on Kubernetes
 
