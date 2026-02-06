@@ -132,7 +132,7 @@ spec:
             port:
               number: 9411
 ---
-# Keycloak Ingress - rewrite /auth to /
+# Keycloak Ingress - no rewrite needed (Keycloak has KC_HTTP_RELATIVE_PATH=/auth)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -140,16 +140,14 @@ metadata:
   namespace: microservices
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   rules:
   - host: microservices.local
     http:
       paths:
-      - path: /auth(/|$)(.*)
-        pathType: ImplementationSpecific
+      - path: /auth
+        pathType: Prefix
         backend:
           service:
             name: keycloak
@@ -158,8 +156,8 @@ spec:
   - host: localhost
     http:
       paths:
-      - path: /auth(/|$)(.*)
-        pathType: ImplementationSpecific
+      - path: /auth
+        pathType: Prefix
         backend:
           service:
             name: keycloak
