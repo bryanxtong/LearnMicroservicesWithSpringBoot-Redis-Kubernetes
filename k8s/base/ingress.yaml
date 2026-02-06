@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: frontend-ingress
+  name: challenges-frontend-ingress
   namespace: microservices
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
@@ -16,7 +16,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: frontend
+            name: challenges-frontend
             port:
               number: 80
   - host: localhost
@@ -26,7 +26,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: frontend
+            name: challenges-frontend
             port:
               number: 80
 ---

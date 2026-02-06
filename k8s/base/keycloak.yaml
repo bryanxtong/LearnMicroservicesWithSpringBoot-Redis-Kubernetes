@@ -5,8 +5,86 @@ metadata:
   namespace: microservices
 data:
   realm-export.json: |
-    # This will be populated from docker/keycloak/realm-export.json
-    # For now, using an empty placeholder - update this with actual realm config
+    {
+      "realm": "microservices-demo",
+      "enabled": true,
+      "sslRequired": "external",
+      "registrationAllowed": false,
+      "loginWithEmailAllowed": true,
+      "duplicateEmailsAllowed": false,
+      "resetPasswordAllowed": false,
+      "editUsernameAllowed": false,
+      "bruteForceProtected": true,
+      "accessTokenLifespan": 300,
+      "ssoSessionIdleTimeout": 1800,
+      "ssoSessionMaxLifespan": 36000,
+      "clients": [
+        {
+          "clientId": "challenges-app",
+          "name": "Challenges Application",
+          "description": "Frontend application for multiplication challenges",
+          "enabled": true,
+          "publicClient": true,
+          "directAccessGrantsEnabled": true,
+          "standardFlowEnabled": true,
+          "implicitFlowEnabled": false,
+          "protocol": "openid-connect",
+          "rootUrl": "http://localhost",
+          "baseUrl": "http://localhost",
+          "redirectUris": [
+            "http://localhost/*",
+            "http://localhost:3000/*",
+            "http://microservices.local/*"
+          ],
+          "webOrigins": [
+            "http://localhost",
+            "http://localhost:3000",
+            "http://microservices.local"
+          ],
+          "attributes": {
+            "post.logout.redirect.uris": "http://localhost/*"
+          }
+        }
+      ],
+      "users": [
+        {
+          "username": "testuser",
+          "enabled": true,
+          "emailVerified": true,
+          "email": "testuser@example.com",
+          "firstName": "Test",
+          "lastName": "User",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "testuser",
+              "temporary": false
+            }
+          ],
+          "realmRoles": ["user"]
+        }
+      ],
+      "roles": {
+        "realm": [
+          {
+            "name": "user",
+            "description": "Regular user role"
+          },
+          {
+            "name": "default-roles-microservices-demo",
+            "description": "Default roles",
+            "composite": true,
+            "composites": {
+              "realm": ["user"]
+            }
+          }
+        ]
+      },
+      "defaultRole": {
+        "name": "default-roles-microservices-demo",
+        "description": "Default roles"
+      }
+    }
 ---
 apiVersion: apps/v1
 kind: Deployment

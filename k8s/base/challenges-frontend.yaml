@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
+  name: challenges-frontend
   namespace: microservices
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: frontend
+      app: challenges-frontend
   template:
     metadata:
       labels:
-        app: frontend
+        app: challenges-frontend
     spec:
       containers:
-      - name: frontend
+      - name: challenges-frontend
         image: challenges-frontend:1.0
         imagePullPolicy: IfNotPresent
         ports:
@@ -23,6 +23,10 @@ spec:
         env:
         - name: SPRING_CLOUD_GATEWAY_HOST
           value: "gateway"
+        - name: REACT_APP_API_URL
+          value: "http://localhost/api"
+        - name: REACT_APP_KEYCLOAK_URL
+          value: "http://localhost/auth"
         resources:
           requests:
             memory: "64Mi"
@@ -34,11 +38,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: frontend
+  name: challenges-frontend
   namespace: microservices
 spec:
   selector:
-    app: frontend
+    app: challenges-frontend
   ports:
   - port: 80
     targetPort: 80

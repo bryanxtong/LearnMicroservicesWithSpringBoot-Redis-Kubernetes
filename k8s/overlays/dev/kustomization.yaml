@@ -30,7 +30,7 @@ patches:
         value: 1
   - target:
       kind: Deployment
-      name: frontend
+      name: challenges-frontend
     patch: |-
       - op: replace
         path: /spec/replicas

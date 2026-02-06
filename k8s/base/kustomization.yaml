@@ -4,7 +4,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - redis.yaml
-  - consul.yaml
+  - consul-statefulset.yaml
   - consul-importer.yaml
   - zipkin.yaml
   - keycloak.yaml
@@ -12,5 +12,5 @@ resources:
   - gamification.yaml
   - logs.yaml
   - gateway.yaml
-  - frontend.yaml
+  - challenges-frontend.yaml
   - ingress.yaml
