@@ -78,3 +78,386 @@ docker$ docker-compose up --scale multiplication=2 --scale gamification=2
 
 And you'll get two instances of each of these services with proper Load Balancing and Service Discovery.
 
+## Running on Kubernetes
+
+This project includes complete Kubernetes deployment configurations with service discovery (Consul), distributed tracing (Zipkin), centralized logging (Redis), and OAuth2 authentication (Keycloak).
+
+### Prerequisites
+
+- **Kubernetes Cluster**: Kind, Minikube, or any Kubernetes cluster (v1.24+)
+- **kubectl**: Kubernetes command-line tool
+- **Docker**: For building images
+- **Ingress Controller**: Nginx Ingress Controller
+
+### Quick Start with Kind
+
+#### 1. Create a Kind Cluster
+
+```bash
+# Create cluster with ingress support
+cat <<EOF | kind create cluster --config=-
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 80
+    protocol: TCP
+  - containerPort: 443
+    hostPort: 443
+    protocol: TCP
+EOF
+```
+
+#### 2. Install Nginx Ingress Controller
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+
+# Wait for ingress controller to be ready
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=90s
+```
+
+#### 3. Build Application Images
+
+Build all Docker images with correct versions:
+
+```bash
+# Build Java microservices (version: 0.0.1-SNAPSHOT)
+cd multiplication && mvn clean package -DskipTests
+docker build -t multiplication:0.0.1-SNAPSHOT .
+
+cd ../gamification && mvn clean package -DskipTests
+docker build -t gamification:0.0.1-SNAPSHOT .
+
+cd ../gateway && mvn clean package -DskipTests
+docker build -t gateway:0.0.1-SNAPSHOT .
+
+cd ../logs && mvn clean package -DskipTests
+docker build -t logs:0.0.1-SNAPSHOT .
+
+# Build Frontend (version: 1.0)
+cd ../challenges-frontend
+npm install
+npm run build
+docker build -t challenges-frontend:1.0 .
+
+# Build Consul importer (version: 1.0)
+cd ../docker/consul
+docker build -t consul-importer:1.0 .
+```
+
+#### 4. Load Images to Kind
+
+```bash
+kind load docker-image multiplication:0.0.1-SNAPSHOT
+kind load docker-image gamification:0.0.1-SNAPSHOT
+kind load docker-image gateway:0.0.1-SNAPSHOT
+kind load docker-image logs:0.0.1-SNAPSHOT
+kind load docker-image challenges-frontend:1.0
+kind load docker-image consul-importer:1.0
+```
+
+#### 5. Deploy to Kubernetes
+
+```bash
+# Deploy all services using Kustomize
+kubectl apply -k k8s/base/
+
+# Or deploy to specific environment
+kubectl apply -k k8s/overlays/dev/
+kubectl apply -k k8s/overlays/prod/
+```
+
+#### 6. Verify Deployment
+
+```bash
+# Check all pods are running
+kubectl get pods -n microservices
+
+# Check services
+kubectl get svc -n microservices
+
+# Check ingress
+kubectl get ingress -n microservices
+```
+
+### Architecture Overview
+
+The Kubernetes deployment includes:
+
+**Microservices**:
+- **Gateway** (2 replicas): API Gateway with OAuth2 Token Relay, port 8000
+- **Multiplication** (1 replica): Multiplication challenge service, port 8080
+- **Gamification** (1 replica): Gamification and leaderboard service, port 8081
+- **Logs** (1 replica): Centralized log consumer, port 8580
+- **Frontend** (2 replicas): React web application, port 80
+
+**Infrastructure Services**:
+- **Consul** (StatefulSet): Service discovery and distributed configuration
+- **Redis** (Deployment + PVC): Message broker (Redis Streams) and log storage
+- **Keycloak** (Deployment): OAuth2/OIDC authentication server
+- **Zipkin** (Deployment): Distributed tracing system
+
+**Configuration**:
+- **Consul Importer** (Job): Automatically imports configuration to Consul KV
+- **ConfigMaps**: Keycloak realm configuration, Redis configuration
+- **Ingress**: Unified HTTP routing for all services
+
+### Accessing the Application
+
+After deployment, access the services at:
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| **Frontend** | http://localhost/ | Main web application |
+| **API Gateway** | http://localhost/api/ | REST API endpoints |
+| **Consul UI** | http://localhost/consul/ | Service registry and config |
+| **Keycloak** | http://localhost/auth/ | Authentication admin console |
+| **Zipkin** | http://localhost/zipkin/ | Distributed tracing UI |
+
+### Authentication
+
+The system uses Keycloak for OAuth2 authentication:
+
+- **Admin Console**: http://localhost/auth/admin/
+  - Username: `admin`
+  - Password: `admin`
+
+- **Test User** (for application login):
+  - Username: `testuser`
+  - Password: `testuser`
+
+### Service Configuration
+
+#### Spring Profiles
+
+Services automatically detect the environment and load appropriate configurations:
+
+- **Default**: Local development (H2 database, localhost connections)
+- **Docker**: Docker Compose environment
+- **Kubernetes**: Kubernetes cluster (uses POD_IP for service registration)
+
+#### Consul Configuration
+
+Centralized configuration is stored in Consul KV:
+- `config/application,docker/`: Docker profile configuration
+- `config/application,kubernetes/`: Kubernetes profile configuration
+
+Configuration includes:
+- Logging levels
+- Spring Cloud settings
+- Shared properties across services
+
+#### OAuth2 Configuration
+
+All microservices are secured with OAuth2 JWT:
+- **Issuer**: Keycloak at http://localhost/auth/realms/microservices-demo
+- **Client**: challenges-app (public client with PKCE)
+- **Scopes**: openid
+- **Token**: JWT with 5-minute expiration
+
+### Persistent Storage
+
+The following services use Persistent Volume Claims (PVC):
+
+| Service | PVC Name | Size | Purpose |
+|---------|----------|------|---------|
+| **Consul** | data-consul-0 | 1Gi | Service registry data |
+| **Consul** | config-consul-0 | 100Mi | Configuration data |
+| **Redis** | redis-pvc | 1Gi | Redis data and logs |
+
+**Note**: Multiplication and Gamification use H2 file databases, so they must run with `replicas: 1` to avoid data inconsistency.
+
+### Scaling Considerations
+
+**Can Scale** (stateless services):
+- Gateway: `kubectl scale deployment gateway -n microservices --replicas=3`
+- Frontend: `kubectl scale deployment challenges-frontend -n microservices --replicas=3`
+- Logs: Can scale with proper Redis Stream consumer groups
+
+**Cannot Scale** (stateful services with local storage):
+- Multiplication: Uses H2 file database
+- Gamification: Uses H2 file database
+- Keycloak: Uses H2 file database (for production, use external database)
+
+**To scale stateful services**, migrate to external databases:
+- PostgreSQL for Keycloak
+- PostgreSQL/MySQL for Multiplication and Gamification
+
+### Monitoring and Debugging
+
+#### View Logs
+
+```bash
+# View logs for a specific service
+kubectl logs -f deployment/gateway -n microservices
+kubectl logs -f deployment/multiplication -n microservices
+
+# View logs for all pods with a label
+kubectl logs -l app=gateway -n microservices --tail=100
+
+# View centralized logs in Redis
+kubectl exec -it deployment/redis -n microservices -- redis-cli
+> XREAD COUNT 10 STREAMS logs:stream 0
+```
+
+#### Check Service Health
+
+```bash
+# Check service endpoints
+kubectl get endpoints -n microservices
+
+# Check Consul service registration
+kubectl port-forward -n microservices svc/consul-ui 8500:8500
+# Visit http://localhost:8500/ui/dc1/services
+
+# Check pod status
+kubectl describe pod <pod-name> -n microservices
+```
+
+#### Distributed Tracing
+
+Access Zipkin UI to view request traces:
+1. Open http://localhost/zipkin/
+2. Click "Run Query" to see recent traces
+3. Click on a trace to see the full request flow across services
+
+### Kubernetes Deployment Structure
+
+```
+k8s/
+├── base/                          # Base configurations
+│   ├── namespace.yaml             # microservices namespace
+│   ├── challenges-frontend.yaml   # Frontend deployment + service
+│   ├── gateway.yaml               # Gateway deployment + service
+│   ├── multiplication.yaml        # Multiplication deployment + service
+│   ├── gamification.yaml          # Gamification deployment + service
+│   ├── logs.yaml                  # Logs deployment + service
+│   ├── consul-statefulset.yaml    # Consul StatefulSet + services
+│   ├── consul-importer.yaml       # Consul config importer job
+│   ├── redis.yaml                 # Redis deployment + PVC + service
+│   ├── keycloak.yaml              # Keycloak deployment + ConfigMap + service
+│   ├── zipkin.yaml                # Zipkin deployment + service
+│   ├── ingress.yaml               # Ingress rules for all services
+│   └── kustomization.yaml         # Kustomize configuration
+└── overlays/                      # Environment-specific overlays
+    ├── dev/
+    │   └── kustomization.yaml     # Development patches
+    └── prod/
+        └── kustomization.yaml     # Production patches
+```
+
+### Environment-Specific Deployment
+
+#### Development Environment
+
+```bash
+kubectl apply -k k8s/overlays/dev/
+```
+
+Development environment features:
+- Reduced resource limits
+- Debug logging enabled
+- Development-mode services
+
+#### Production Environment
+
+```bash
+kubectl apply -k k8s/overlays/prod/
+```
+
+Production environment features:
+- Higher resource limits
+- Production logging levels
+- Health checks and probes
+
+### Troubleshooting
+
+#### Pods Not Starting
+
+```bash
+# Check pod events
+kubectl describe pod <pod-name> -n microservices
+
+# Check if images are available
+kubectl get pods -n microservices -o jsonpath='{.items[*].spec.containers[*].image}' | tr ' ' '\n'
+
+# For Kind, ensure images are loaded
+kind load docker-image <image-name>:<tag>
+```
+
+#### Service Discovery Issues
+
+```bash
+# Check Consul registration
+kubectl exec -it consul-0 -n microservices -- consul members
+
+# View Consul logs
+kubectl logs consul-0 -n microservices
+
+# Check if services registered
+kubectl exec -it consul-0 -n microservices -- consul catalog services
+```
+
+#### Ingress Not Working
+
+```bash
+# Check ingress controller
+kubectl get pods -n ingress-nginx
+
+# Check ingress rules
+kubectl describe ingress -n microservices
+
+# Test from inside the cluster
+kubectl run -it --rm debug --image=curlimages/curl --restart=Never -- \
+  curl http://gateway.microservices.svc.cluster.local:8000/actuator/health
+```
+
+#### Authentication Issues
+
+```bash
+# Check Keycloak logs
+kubectl logs deployment/keycloak -n microservices
+
+# Verify realm import
+kubectl exec -it deployment/keycloak -n microservices -- \
+  ls -la /opt/keycloak/data/import/
+
+# Test Keycloak endpoint
+curl http://localhost/auth/realms/microservices-demo
+```
+
+### Cleanup
+
+To remove all resources:
+
+```bash
+# Delete all resources in the namespace
+kubectl delete namespace microservices
+
+# Or use Kustomize
+kubectl delete -k k8s/base/
+
+# Delete Kind cluster
+kind delete cluster
+```
+
+### Next Steps
+
+- **Production Readiness**: Replace H2 databases with PostgreSQL
+- **High Availability**: Deploy Consul in HA mode (3 nodes)
+- **Monitoring**: Add Prometheus and Grafana
+- **Service Mesh**: Consider Istio or Linkerd for advanced traffic management
+- **GitOps**: Use ArgoCD or Flux for continuous deployment
+
