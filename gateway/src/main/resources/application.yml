@@ -115,9 +115,39 @@ spring:
                 exposedHeaders:
                   - "Authorization"
                 allowCredentials: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: kubernetes
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                 - "http://challenges-frontend"
+                 - "http://microservices.local"
+                 - "http://localhost"
+                 - "http://localhost:3000"
+                allowedHeaders:
+                  - "*"
+                allowedMethods:
+                  - "GET"
+                  - "POST"
+                  - "PUT"
+                  - "DELETE"
+                  - "OPTIONS"
+                exposedHeaders:
+                  - "Authorization"
+                allowCredentials: true
+  #with ingress using localhost/auth for k8s profile
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8180/realms/microservices-demo
-          jwk-set-uri: http://${KEYCLOAK_HOST:keycloak}:8180/realms/microservices-demo/protocol/openid-connect/certs
+          issuer-uri: http://localhost/auth/realms/microservices-demo
+          jwk-set-uri: http://keycloak:8180/auth/realms/microservices-demo/protocol/openid-connect/certs

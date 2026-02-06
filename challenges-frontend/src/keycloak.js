@@ -1,7 +1,11 @@
 import Keycloak from 'keycloak-js';
 
+const keycloakUrl = process.env.REACT_APP_KEYCLOAK_URL || 'http://localhost/auth';
+
+//  - Kubernetes http://localhost/auth
+//  - Docker http://localhost:8180
 const keycloak = new Keycloak({
-    url: 'http://localhost:8180',
+    url: keycloakUrl,
     realm: 'microservices-demo',
     clientId: 'challenges-app'
 });

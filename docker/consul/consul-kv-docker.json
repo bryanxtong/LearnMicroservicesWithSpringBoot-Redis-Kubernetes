@@ -13,5 +13,15 @@
 		"key": "config/application,docker/data",
 		"flags": 0,
 		"value": "bG9nZ2luZzoKICBsZXZlbDoKICAgIG9yZy5zcHJpbmdmcmFtZXdvcmsuY29yZS5lbnY6IERFQlVH"
+	},
+	{
+		"key": "config/application,kubernetes/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "config/application,kubernetes/data",
+		"flags": 0,
+		"value": "bG9nZ2luZzoKICBsZXZlbDoKICAgIG9yZy5zcHJpbmdmcmFtZXdvcmsuY29yZS5lbnY6IERFQlVH"
 	}
 ]

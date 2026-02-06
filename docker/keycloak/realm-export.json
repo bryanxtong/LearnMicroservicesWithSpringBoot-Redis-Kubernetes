@@ -22,16 +22,20 @@
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
       "protocol": "openid-connect",
-      "rootUrl": "http://localhost:3000",
-      "baseUrl": "http://localhost:3000",
+      "rootUrl": "http://localhost",
+      "baseUrl": "http://localhost",
       "redirectUris": [
-        "http://localhost:3000/*"
+        "http://localhost/*",
+        "http://localhost:3000/*",
+        "http://microservices.local/*"
       ],
       "webOrigins": [
-        "http://localhost:3000"
+        "http://localhost",
+        "http://localhost:3000",
+        "http://microservices.local"
       ],
       "attributes": {
-        "post.logout.redirect.uris": "http://localhost:3000/*"
+        "post.logout.redirect.uris": "http://localhost/*"
       }
     }
   ],
