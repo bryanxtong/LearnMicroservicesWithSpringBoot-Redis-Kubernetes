@@ -44,8 +44,14 @@ spring:
                 allowedMethods:
                   - "GET"
                   - "POST"
+                  - "PUT"
+                  - "DELETE"
                   - "OPTIONS"
+                exposedHeaders:
+                  - "Authorization"
+                allowCredentials: true
           default-filters:
+            - TokenRelay
             - name: Retry
               args:
                 retries: 3
@@ -56,6 +62,12 @@ spring:
             #wiretap: true
           #httpclient:
             #wiretap: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/microservices-demo
+          jwk-set-uri: http://${KEYCLOAK_HOST:localhost}:8180/realms/microservices-demo/protocol/openid-connect/certs
   reactor:
     context-propagation: auto
 ##working with default logback configuration for distributed tracing
@@ -97,4 +109,15 @@ spring:
                 allowedMethods:
                   - "GET"
                   - "POST"
+                  - "PUT"
+                  - "DELETE"
                   - "OPTIONS"
+                exposedHeaders:
+                  - "Authorization"
+                allowCredentials: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/microservices-demo
+          jwk-set-uri: http://${KEYCLOAK_HOST:keycloak}:8180/realms/microservices-demo/protocol/openid-connect/certs

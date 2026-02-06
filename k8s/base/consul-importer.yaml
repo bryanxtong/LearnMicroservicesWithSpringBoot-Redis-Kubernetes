@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: consul-importer
+  namespace: microservices
+spec:
+  template:
+    metadata:
+      labels:
+        app: consul-importer
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: consul-importer
+        image: consul-importer:1.0
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: CONSUL_HTTP_ADDR
+          value: "consul:8500"
+        command:
+          - /bin/sh
+          - -c
+          - |
+            until consul kv import @consul-kv-docker.json; do
+              echo "Waiting for Consul to be ready..."
+              sleep 2
+            done
+            echo "Consul configuration imported successfully"

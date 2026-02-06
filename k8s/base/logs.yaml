@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logs
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logs
+  template:
+    metadata:
+      labels:
+        app: logs
+    spec:
+      containers:
+      - name: logs
+        image: logs:0.0.1-SNAPSHOT
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8580
+          name: http
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "kubernetes"
+        - name: SPRING_CLOUD_CONSUL_HOST
+          value: "consul"
+        - name: SPRING_CLOUD_REDIS_HOST
+          value: "redis"
+        - name: SPRING_CLOUD_ZIPKIN_HOST
+          value: "zipkin"
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: SPRING_CLOUD_CONSUL_DISCOVERY_IPADDRESS
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8580
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8580
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logs
+  namespace: microservices
+spec:
+  selector:
+    app: logs
+  ports:
+  - port: 8580
+    targetPort: 8580
+  type: ClusterIP

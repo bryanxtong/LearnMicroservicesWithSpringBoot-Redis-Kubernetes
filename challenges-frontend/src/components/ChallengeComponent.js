@@ -2,12 +2,14 @@ import * as React from "react";
 import ChallengeApiClient from "../services/ChallengeApiClient";
 import LastAttemptsComponent from "./LastAttemptsComponent";
 import LeaderBoardComponent from "./LeaderBoardComponent";
+import { getUsername } from "../keycloak";
+
 class ChallengeComponent extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             a: '', b: '',
-            user: '',
+            user: getUsername(),
             message: '',
             guess: 0,
             lastAttempts: [],
@@ -17,6 +19,7 @@ class ChallengeComponent extends React.Component {
     }
     componentDidMount(): void {
         this.refreshChallenge();
+        this.updateLastAttempts(this.state.user);
     }
 
     refreshChallenge() {
@@ -98,13 +101,6 @@ class ChallengeComponent extends React.Component {
                 </div>
                 <form onSubmit={this.handleSubmitResult} >
                     <div className="form-container">
-                        <label htmlFor="alias">Your alias:</label>
-                        <input id="alias" type="text" maxLength="12"
-                                   name="user"
-                                   value={this.state.user}
-                                   onChange={this.handleChange}/>
-                    </div>
-                    <div className="form-container">
                         <label htmlFor="guess">Your guess:</label>
                         <input id="guess" type="number" min="0"
                                    name="guess"
@@ -112,7 +108,7 @@ class ChallengeComponent extends React.Component {
                                    onChange={this.handleChange}/>
                     </div>
                     <div className="form-container">
-                        <input id="guess" className="input-group submit-button" type="submit" value="Submit"/>
+                        <input id="submit" className="input-group submit-button" type="submit" value="Submit"/>
                     </div>
 
                 </form>

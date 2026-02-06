@@ -16,6 +16,7 @@ services:
       - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_CLOUD_REDIS_HOST=redis
       - SPRING_CLOUD_ZIPKIN_HOST=zipkin
+      - KEYCLOAK_HOST=keycloak
     depends_on:
       - redis
       - consul-importer
@@ -28,6 +29,7 @@ services:
       - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_CLOUD_REDIS_HOST=redis
       - SPRING_CLOUD_ZIPKIN_HOST=zipkin
+      - KEYCLOAK_HOST=keycloak
     depends_on:
       - redis
       - consul-importer
@@ -42,6 +44,7 @@ services:
       - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_CLOUD_REDIS_HOST=redis
       - SPRING_CLOUD_ZIPKIN_HOST=zipkin
+      - KEYCLOAK_HOST=keycloak
     depends_on:
       - redis
       - consul-importer
@@ -95,6 +98,22 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
+    networks:
+      - microservices
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    container_name: keycloak
+    command:
+      - start-dev
+      - --import-realm
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_HTTP_PORT=8180
+    ports:
+      - '8180:8180'
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
     networks:
       - microservices
 volumes:

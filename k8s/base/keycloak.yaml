@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-realm
+  namespace: microservices
+data:
+  realm-export.json: |
+    # This will be populated from docker/keycloak/realm-export.json
+    # For now, using an empty placeholder - update this with actual realm config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+      - name: keycloak
+        image: quay.io/keycloak/keycloak:24.0.1
+        args:
+          - start-dev
+          - --import-realm
+        env:
+        - name: KEYCLOAK_ADMIN
+          value: "admin"
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          value: "admin"
+        - name: KC_HTTP_PORT
+          value: "8180"
+        - name: KC_HTTP_RELATIVE_PATH
+          value: "/auth"
+        - name: KC_PROXY
+          value: "edge"
+        - name: KC_HOSTNAME_STRICT
+          value: "false"
+        - name: KC_HOSTNAME_STRICT_HTTPS
+          value: "false"
+        ports:
+        - containerPort: 8180
+          name: http
+        volumeMounts:
+        - name: realm-config
+          mountPath: /opt/keycloak/data/import
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+      volumes:
+      - name: realm-config
+        configMap:
+          name: keycloak-realm
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  namespace: microservices
+spec:
+  selector:
+    app: keycloak
+  ports:
+  - port: 8180
+    targetPort: 8180
+  type: ClusterIP

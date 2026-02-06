@@ -1,0 +1,167 @@
+# Frontend Ingress - Main app
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontend-ingress
+  namespace: microservices
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: microservices.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend
+            port:
+              number: 80
+  - host: localhost
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend
+            port:
+              number: 80
+---
+# API Gateway Ingress - rewrite /api to /
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway-ingress
+  namespace: microservices
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: microservices.local
+    http:
+      paths:
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: gateway
+            port:
+              number: 8000
+  - host: localhost
+    http:
+      paths:
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: gateway
+            port:
+              number: 8000
+---
+# Consul Ingress - rewrite /consul to /
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: consul-ingress
+  namespace: microservices
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: microservices.local
+    http:
+      paths:
+      - path: /consul(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: consul
+            port:
+              number: 8500
+  - host: localhost
+    http:
+      paths:
+      - path: /consul(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: consul
+            port:
+              number: 8500
+---
+# Zipkin Ingress - rewrite /zipkin to /
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: zipkin-ingress
+  namespace: microservices
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: microservices.local
+    http:
+      paths:
+      - path: /zipkin(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: zipkin
+            port:
+              number: 9411
+  - host: localhost
+    http:
+      paths:
+      - path: /zipkin(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: zipkin
+            port:
+              number: 9411
+---
+# Keycloak Ingress - rewrite /auth to /
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: keycloak-ingress
+  namespace: microservices
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: microservices.local
+    http:
+      paths:
+      - path: /auth(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: keycloak
+            port:
+              number: 8180
+  - host: localhost
+    http:
+      paths:
+      - path: /auth(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: keycloak
+            port:
+              number: 8180
