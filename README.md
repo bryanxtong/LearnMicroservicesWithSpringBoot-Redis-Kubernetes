@@ -385,6 +385,7 @@ k8s/
 │   ├── keycloak.yaml              # Keycloak deployment + ConfigMap + service
 │   ├── zipkin.yaml                # Zipkin deployment + service
 │   ├── ingress.yaml               # Ingress rules for all services
+│   ├── network-policies.yaml      # Network security policies
 │   └── kustomization.yaml         # Kustomize configuration
 └── overlays/                      # Environment-specific overlays
     ├── dev/
@@ -394,6 +395,30 @@ k8s/
 ```
 
 ### Environment-Specific Deployment
+
+### Network Security
+
+The deployment includes comprehensive Network Policies for zero-trust security:
+
+**Default Deny**: All ingress traffic is denied by default in the microservices namespace.
+
+**Allowed Traffic**:
+- **Ingress Controller → Public Services**: Frontend, Gateway, Consul, Zipkin, Keycloak
+- **Backend Services → Infrastructure**: Access to Redis (6379), Consul (8500, 8600), Zipkin (9411)
+- **Gateway → Backend Services**:
+  - Gateway → Multiplication (port 8080)
+  - Gateway → Gamification (port 8081)
+  - Gateway → Logs (port 8580)
+- **Consul → Backend Services**: Health check access to all backend services (ports 8000, 8080, 8081, 8580)
+- **Services → Keycloak**: Gateway, Multiplication, Gamification can access Keycloak (port 8180)
+
+**Service Ports**:
+- Gateway: 8000
+- Multiplication: 8080
+- Gamification: 8081
+- Logs: 8580
+
+These policies ensure that services can only communicate through explicitly defined paths, enhancing security and preventing unauthorized access.
 
 #### Development Environment
 
