@@ -268,6 +268,7 @@ The system uses Keycloak for OAuth2 authentication:
 - **Admin Console**: http://localhost/auth/admin/
   - Username: `admin`
   - Password: `admin`
+  - **Note**: Admin credentials are stored in `k8s/base/keycloak-secret.yaml`. For production, override this Secret in the prod overlay with secure credentials.
 
 - **Test User** (for application login):
   - Username: `testuser`
@@ -383,6 +384,7 @@ k8s/
 │   ├── consul-importer.yaml       # Consul config importer job
 │   ├── redis.yaml                 # Redis deployment + PVC + service
 │   ├── keycloak.yaml              # Keycloak deployment + ConfigMap + service
+│   ├── keycloak-secret.yaml       # Keycloak admin credentials (Secret)
 │   ├── zipkin.yaml                # Zipkin deployment + service
 │   ├── ingress.yaml               # Ingress rules for all services
 │   ├── network-policies.yaml      # Network security policies
