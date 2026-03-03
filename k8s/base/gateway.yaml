@@ -48,6 +48,10 @@ spec:
           value: "zipkin"
         - name: KEYCLOAK_HOST
           value: "keycloak"
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         livenessProbe:
           httpGet:
             path: /actuator/health/liveness
