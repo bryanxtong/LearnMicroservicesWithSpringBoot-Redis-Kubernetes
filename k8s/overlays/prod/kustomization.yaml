@@ -7,20 +7,24 @@ resources:
   - ../../base
 
 patches:
+  # WARNING: multiplication and gamification use H2 file-based database.
+  # Scaling beyond 1 replica will cause data inconsistency because each
+  # pod has its own isolated H2 file. Migrate to a shared database (e.g.
+  # PostgreSQL) before increasing replicas.
   - target:
       kind: Deployment
       name: multiplication
     patch: |-
       - op: replace
         path: /spec/replicas
-        value: 3
+        value: 1
   - target:
       kind: Deployment
       name: gamification
     patch: |-
       - op: replace
         path: /spec/replicas
-        value: 3
+        value: 1
   - target:
       kind: Deployment
       name: gateway

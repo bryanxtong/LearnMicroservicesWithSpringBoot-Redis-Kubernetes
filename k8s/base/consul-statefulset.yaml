@@ -5,6 +5,10 @@ metadata:
   namespace: microservices
   labels:
     app: consul
+    app.kubernetes.io/name: consul
+    app.kubernetes.io/component: service-discovery
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
 spec:
   clusterIP: None  # Headless service for StatefulSet
   ports:
@@ -34,6 +38,10 @@ metadata:
   namespace: microservices
   labels:
     app: consul
+    app.kubernetes.io/name: consul
+    app.kubernetes.io/component: service-discovery
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
 spec:
   type: ClusterIP
   ports:
@@ -48,6 +56,11 @@ kind: StatefulSet
 metadata:
   name: consul
   namespace: microservices
+  labels:
+    app.kubernetes.io/name: consul
+    app.kubernetes.io/component: service-discovery
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
 spec:
   serviceName: consul
   replicas: 1
@@ -58,7 +71,17 @@ spec:
     metadata:
       labels:
         app: consul
+        app.kubernetes.io/name: consul
+        app.kubernetes.io/component: service-discovery
+        app.kubernetes.io/part-of: microservices-demo
     spec:
+      initContainers:
+      - name: fix-permissions
+        image: busybox:latest
+        command: ['sh', '-c', 'chmod -R 777 /consul/data']
+        volumeMounts:
+        - name: data
+          mountPath: /consul/data
       containers:
       - name: consul
         image: hashicorp/consul:1.21.0
@@ -71,7 +94,6 @@ spec:
           - "-client=0.0.0.0"
           - "-advertise=$(POD_IP)"
           - "-data-dir=/consul/data"
-          - "-config-dir=/consul/config"
         env:
         - name: POD_IP
           valueFrom:
@@ -96,8 +118,6 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /consul/data
-        - name: config
-          mountPath: /consul/config
         resources:
           requests:
             memory: "256Mi"
@@ -125,10 +145,3 @@ spec:
       resources:
         requests:
           storage: 1Gi
-  - metadata:
-      name: config
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      resources:
-        requests:
-          storage: 100Mi

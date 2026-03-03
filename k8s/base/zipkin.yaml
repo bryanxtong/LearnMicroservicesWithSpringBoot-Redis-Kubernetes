@@ -3,6 +3,11 @@ kind: Deployment
 metadata:
   name: zipkin
   namespace: microservices
+  labels:
+    app.kubernetes.io/name: zipkin
+    app.kubernetes.io/component: tracing
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
 spec:
   replicas: 1
   selector:
@@ -12,10 +17,22 @@ spec:
     metadata:
       labels:
         app: zipkin
+        app.kubernetes.io/name: zipkin
+        app.kubernetes.io/component: tracing
+        app.kubernetes.io/part-of: microservices-demo
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
       containers:
       - name: zipkin
         image: openzipkin/zipkin:latest
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
         ports:
         - containerPort: 9411
           name: http
@@ -44,6 +61,11 @@ kind: Service
 metadata:
   name: zipkin
   namespace: microservices
+  labels:
+    app.kubernetes.io/name: zipkin
+    app.kubernetes.io/component: tracing
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
 spec:
   selector:
     app: zipkin

@@ -3,6 +3,11 @@ kind: Deployment
 metadata:
   name: challenges-frontend
   namespace: microservices
+  labels:
+    app.kubernetes.io/name: challenges-frontend
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
 spec:
   replicas: 2
   selector:
@@ -12,6 +17,9 @@ spec:
     metadata:
       labels:
         app: challenges-frontend
+        app.kubernetes.io/name: challenges-frontend
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/part-of: microservices-demo
     spec:
       containers:
       - name: challenges-frontend
@@ -20,13 +28,20 @@ spec:
         ports:
         - containerPort: 80
           name: http
-        env:
-        - name: SPRING_CLOUD_GATEWAY_HOST
-          value: "gateway"
-        - name: REACT_APP_API_URL
-          value: "http://localhost/api"
-        - name: REACT_APP_KEYCLOAK_URL
-          value: "http://localhost/auth"
+        # REACT_APP_* variables are build-time only (baked into the JS bundle
+        # during `npm run build`). Setting them at runtime has no effect.
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
         resources:
           requests:
             memory: "64Mi"
@@ -40,6 +55,11 @@ kind: Service
 metadata:
   name: challenges-frontend
   namespace: microservices
+  labels:
+    app.kubernetes.io/name: challenges-frontend
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
 spec:
   selector:
     app: challenges-frontend

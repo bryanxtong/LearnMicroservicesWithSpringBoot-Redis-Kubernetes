@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - namespace.yaml
+  - keycloak-secret.yaml
   - redis.yaml
   - consul-statefulset.yaml
   - consul-importer.yaml
@@ -14,3 +15,4 @@ resources:
   - gateway.yaml
   - challenges-frontend.yaml
   - ingress.yaml
+  - network-policies.yaml

@@ -3,17 +3,36 @@ kind: Job
 metadata:
   name: consul-importer
   namespace: microservices
+  labels:
+    app.kubernetes.io/name: consul-importer
+    app.kubernetes.io/component: configuration
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
 spec:
+  backoffLimit: 6
+  ttlSecondsAfterFinished: 300
   template:
     metadata:
       labels:
         app: consul-importer
+        app.kubernetes.io/name: consul-importer
+        app.kubernetes.io/component: configuration
+        app.kubernetes.io/part-of: microservices-demo
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        fsGroup: 100
       restartPolicy: OnFailure
       containers:
       - name: consul-importer
         image: consul-importer:1.0
         imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
         env:
         - name: CONSUL_HTTP_ADDR
           value: "consul:8500"
@@ -26,3 +45,10 @@ spec:
               sleep 2
             done
             echo "Consul configuration imported successfully"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"

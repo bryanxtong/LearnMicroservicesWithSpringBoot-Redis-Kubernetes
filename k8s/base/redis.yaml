@@ -3,6 +3,11 @@ kind: ConfigMap
 metadata:
   name: redis-config
   namespace: microservices
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: datastore
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
 data:
   redis.conf: |
     appendonly yes
@@ -13,6 +18,11 @@ kind: PersistentVolumeClaim
 metadata:
   name: redis-pvc
   namespace: microservices
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: datastore
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
 spec:
   accessModes:
     - ReadWriteOnce
@@ -25,6 +35,11 @@ kind: Deployment
 metadata:
   name: redis
   namespace: microservices
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: datastore
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
 spec:
   replicas: 1
   selector:
@@ -34,16 +49,42 @@ spec:
     metadata:
       labels:
         app: redis
+        app.kubernetes.io/name: redis
+        app.kubernetes.io/component: datastore
+        app.kubernetes.io/part-of: microservices-demo
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        fsGroup: 999
       containers:
       - name: redis
         image: redis:7.0-alpine
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
         ports:
         - containerPort: 6379
           name: redis
         command:
           - redis-server
           - /etc/redis/redis.conf
+        livenessProbe:
+          exec:
+            command:
+              - redis-cli
+              - ping
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+              - redis-cli
+              - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
         volumeMounts:
         - name: redis-data
           mountPath: /data
@@ -69,6 +110,11 @@ kind: Service
 metadata:
   name: redis
   namespace: microservices
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: datastore
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
 spec:
   selector:
     app: redis
