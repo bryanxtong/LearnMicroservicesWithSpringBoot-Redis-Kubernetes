@@ -1,5 +1,10 @@
-FROM openjdk:17
-COPY ./target/gateway-0.0.1-SNAPSHOT.jar /usr/src/gateway/
-WORKDIR /usr/src/gateway
-EXPOSE 8080
-CMD ["java", "-jar", "gateway-0.0.1-SNAPSHOT.jar"]
+FROM eclipse-temurin:17-jre-alpine
+RUN addgroup -g 1000 -S appuser && adduser -u 1000 -S appuser -G appuser
+WORKDIR /app
+COPY ./target/gateway-0.0.1-SNAPSHOT.jar app.jar
+RUN chown -R appuser:appuser /app
+USER appuser
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8000/actuator/health || exit 1
+CMD ["java", "-jar", "app.jar"]

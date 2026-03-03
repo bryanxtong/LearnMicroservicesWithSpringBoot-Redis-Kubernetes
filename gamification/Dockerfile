@@ -1,5 +1,10 @@
-FROM openjdk:17
-COPY ./target/gamification-0.0.1-SNAPSHOT.jar /usr/src/gamification/
-WORKDIR /usr/src/gamification
-EXPOSE 8080
-CMD ["java", "-jar", "gamification-0.0.1-SNAPSHOT.jar"]
+FROM eclipse-temurin:17-jre-alpine
+RUN addgroup -g 1000 -S appuser && adduser -u 1000 -S appuser -G appuser
+WORKDIR /app
+COPY ./target/gamification-0.0.1-SNAPSHOT.jar app.jar
+RUN chown -R appuser:appuser /app
+USER appuser
+EXPOSE 8081
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8081/actuator/health || exit 1
+CMD ["java", "-jar", "app.jar"]

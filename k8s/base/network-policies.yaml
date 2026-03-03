@@ -1,0 +1,255 @@
+# Default deny all ingress traffic in the namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: microservices
+  labels:
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# Allow ingress controller to reach externally-exposed services
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-public-services
+  namespace: microservices
+  labels:
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - challenges-frontend
+          - gateway
+          - consul
+          - zipkin
+          - keycloak
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow traffic from ingress controller (typically in ingress-nginx namespace)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+    # Allow traffic from within the microservices namespace
+    - from:
+        - podSelector: {}
+---
+# Allow Java services to reach Redis, Consul, and Zipkin
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-to-infra
+  namespace: microservices
+  labels:
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - redis
+          - consul
+          - zipkin
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - multiplication
+                  - gamification
+                  - gateway
+                  - logs
+      ports:
+        - protocol: TCP
+          port: 6379
+        - protocol: TCP
+          port: 8500
+        - protocol: UDP
+          port: 8600
+        - protocol: TCP
+          port: 9411
+---
+# Allow Consul to reach backend services for health checks
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-consul-to-backend
+  namespace: microservices
+  labels:
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - multiplication
+          - gamification
+          - gateway
+          - logs
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: consul
+      ports:
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8081
+        - protocol: TCP
+          port: 8580
+---
+# Allow gateway to reach multiplication service
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-multiplication
+  namespace: microservices
+  labels:
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector:
+    matchLabels:
+      app: multiplication
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: gateway
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# Allow gateway to reach gamification service
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-gamification
+  namespace: microservices
+  labels:
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector:
+    matchLabels:
+      app: gamification
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: gateway
+      ports:
+        - protocol: TCP
+          port: 8081
+---
+# Allow gateway to reach logs service
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-logs
+  namespace: microservices
+  labels:
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector:
+    matchLabels:
+      app: logs
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: gateway
+      ports:
+        - protocol: TCP
+          port: 8580
+---
+# Allow gateway, multiplication, and gamification to reach Keycloak
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-services-to-keycloak
+  namespace: microservices
+  labels:
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector:
+    matchLabels:
+      app: keycloak
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - gateway
+                  - multiplication
+                  - gamification
+      ports:
+        - protocol: TCP
+          port: 8180
+    # Allow ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8180
+---
+# Allow consul-importer Job to reach Consul
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-importer-to-consul
+  namespace: microservices
+  labels:
+    app.kubernetes.io/part-of: microservices-demo
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector:
+    matchLabels:
+      app: consul
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: consul-importer
+      ports:
+        - protocol: TCP
+          port: 8500
