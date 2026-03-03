@@ -14,8 +14,8 @@ spring:
         query-passing: true
         # Use IP address instead of hostname for service registration
         prefer-ip-address: true
-        ip-address: ${POD_IP:localhost}
-        instance-id: ${spring.application.name}:${POD_IP:localhost}:${server.port}
+        ip-address: ${POD_IP}
+        instance-id: ${spring.application.name}:${POD_IP}:${server.port}
         health-check-path: /actuator/health
         health-check-interval: 10s
       host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
