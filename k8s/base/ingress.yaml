@@ -74,7 +74,7 @@ spec:
             port:
               number: 8000
 ---
-# Consul Ingress - rewrite /consul to /
+# Consul Ingress - handle /v1 API, /ui UI, and /consul redirect
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -87,14 +87,26 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   rules:
   - host: microservices.local
     http:
       paths:
+      - path: /v1(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: consul
+            port:
+              number: 8500
+      - path: /ui(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: consul
+            port:
+              number: 8500
       - path: /consul(/|$)(.*)
         pathType: ImplementationSpecific
         backend:
@@ -105,6 +117,20 @@ spec:
   - host: localhost
     http:
       paths:
+      - path: /v1(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: consul
+            port:
+              number: 8500
+      - path: /ui(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: consul
+            port:
+              number: 8500
       - path: /consul(/|$)(.*)
         pathType: ImplementationSpecific
         backend:

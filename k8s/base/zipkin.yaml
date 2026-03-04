@@ -29,9 +29,6 @@ spec:
       - name: zipkin
         image: openzipkin/zipkin:latest
         imagePullPolicy: IfNotPresent
-        env:
-        - name: ZIPKIN_BASE_PATH
-          value: "/zipkin"
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -44,13 +41,13 @@ spec:
           httpGet:
             path: /health
             port: 9411
-          initialDelaySeconds: 30
+          initialDelaySeconds: 60
           periodSeconds: 10
         readinessProbe:
           httpGet:
             path: /health
             port: 9411
-          initialDelaySeconds: 10
+          initialDelaySeconds: 45
           periodSeconds: 10
         resources:
           requests:
