@@ -257,7 +257,7 @@ After deployment, access the services at:
 |---------|-----|-------------|
 | **Frontend** | http://localhost/ | Main web application |
 | **API Gateway** | http://localhost/api/ | REST API endpoints |
-| **Consul UI** | http://localhost/ui/ | Service registry and config |
+| **Consul UI** | http://localhost/consul/ | Service registry and config (auto-redirects to /ui/) |
 | **Consul API** | http://localhost/v1/ | Consul REST API |
 | **Keycloak** | http://localhost/auth/ | Authentication admin console |
 | **Zipkin** | http://localhost/zipkin/ | Distributed tracing UI |
@@ -267,9 +267,9 @@ After deployment, access the services at:
 The Nginx Ingress Controller routes requests to backend services:
 
 **Consul Ingress Rules**:
-- `/v1(/|$)(.*)` → Consul API (port 8500) - for service discovery API calls
+- `/consul(/|$)(.*)` → Consul UI (port 8500) - Consul automatically redirects to `/ui/`
 - `/ui(/|$)(.*)` → Consul UI (port 8500) - for UI resources and pages
-- `/consul(/|$)(.*)` → Consul UI (port 8500) - redirect to Consul UI
+- `/v1(/|$)(.*)` → Consul API (port 8500) - for service discovery API calls
 
 **Gateway Ingress Rules**:
 - `/api(/|$)(.*)` → Gateway (port 8000) - rewritten to `/` for backend
