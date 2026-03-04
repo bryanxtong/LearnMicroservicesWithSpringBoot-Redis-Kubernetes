@@ -28,6 +28,7 @@ spec:
       containers:
       - name: zipkin
         image: openzipkin/zipkin:latest
+        imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -50,11 +51,11 @@ spec:
           periodSeconds: 10
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "200m"
-          limits:
             memory: "512Mi"
-            cpu: "500m"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
 ---
 apiVersion: v1
 kind: Service
