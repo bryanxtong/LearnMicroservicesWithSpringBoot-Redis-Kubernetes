@@ -113,7 +113,7 @@ spec:
             port:
               number: 8500
 ---
-# Zipkin Ingress - rewrite /zipkin to /
+# Zipkin Ingress - no rewrite, Zipkin runs at /zipkin
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -126,16 +126,14 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   rules:
   - host: microservices.local
     http:
       paths:
-      - path: /zipkin(/|$)(.*)
-        pathType: ImplementationSpecific
+      - path: /zipkin
+        pathType: Prefix
         backend:
           service:
             name: zipkin
@@ -144,8 +142,8 @@ spec:
   - host: localhost
     http:
       paths:
-      - path: /zipkin(/|$)(.*)
-        pathType: ImplementationSpecific
+      - path: /zipkin
+        pathType: Prefix
         backend:
           service:
             name: zipkin

@@ -29,6 +29,9 @@ spec:
       - name: zipkin
         image: openzipkin/zipkin:latest
         imagePullPolicy: IfNotPresent
+        env:
+        - name: ZIPKIN_BASE_PATH
+          value: "/zipkin"
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
