@@ -257,9 +257,31 @@ After deployment, access the services at:
 |---------|-----|-------------|
 | **Frontend** | http://localhost/ | Main web application |
 | **API Gateway** | http://localhost/api/ | REST API endpoints |
-| **Consul UI** | http://localhost/consul/ | Service registry and config |
+| **Consul UI** | http://localhost/ui/ | Service registry and config |
+| **Consul API** | http://localhost/v1/ | Consul REST API |
 | **Keycloak** | http://localhost/auth/ | Authentication admin console |
 | **Zipkin** | http://localhost/zipkin/ | Distributed tracing UI |
+
+### Ingress Routing
+
+The Nginx Ingress Controller routes requests to backend services:
+
+**Consul Ingress Rules**:
+- `/v1(/|$)(.*)` → Consul API (port 8500) - for service discovery API calls
+- `/ui(/|$)(.*)` → Consul UI (port 8500) - for UI resources and pages
+- `/consul(/|$)(.*)` → Consul UI (port 8500) - redirect to Consul UI
+
+**Gateway Ingress Rules**:
+- `/api(/|$)(.*)` → Gateway (port 8000) - rewritten to `/` for backend
+
+**Frontend Ingress Rules**:
+- `/` → Frontend (port 80) - main application
+
+**Zipkin Ingress Rules**:
+- `/zipkin` → Zipkin (port 9411) - distributed tracing UI
+
+**Keycloak Ingress Rules**:
+- `/auth` → Keycloak (port 8180) - OAuth2/OIDC authentication
 
 ### Authentication
 
@@ -354,9 +376,8 @@ kubectl exec -it deployment/redis -n microservices -- redis-cli
 # Check service endpoints
 kubectl get endpoints -n microservices
 
-# Check Consul service registration
-kubectl port-forward -n microservices svc/consul-ui 8500:8500
-# Visit http://localhost:8500/ui/dc1/services
+# Check Consul service registration via Ingress
+# Visit http://localhost/ui/dc1/services
 
 # Check pod status
 kubectl describe pod <pod-name> -n microservices
